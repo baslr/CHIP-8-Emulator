@@ -85,16 +85,16 @@ load:
 
     // Emulation loop
 
-    std::chrono::duration<int64_t, std::nano> loopstart, loopend;
+    std::chrono::duration<int64_t, std::nano> oldnow, currentnow;
 
-    std::chrono::duration<int64_t, std::nano> frametime = std::chrono::nanoseconds(static_cast<int64_t>((1.0 / 60) * 1000 * 1000 * 1000));
+    std::chrono::nanoseconds frametime = std::chrono::nanoseconds(static_cast<int64_t>((1.0 / 60) * 1000 * 1000 * 1000));
 
     std::cout << "frametime " << frametime.count() << std::endl;
 
+    oldnow = std::chrono::system_clock::now().time_since_epoch();
+
     while (true)
     {
-        loopstart = std::chrono::system_clock::now().time_since_epoch();
-
         chip8.emulate_cycle();
 
         // Process SDL events
@@ -153,10 +153,12 @@ load:
             SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
             SDL_RenderPresent(renderer);
 
-            loopend = std::chrono::system_clock::now().time_since_epoch();
-            auto diffns = loopend - loopstart;
+            currentnow = std::chrono::system_clock::now().time_since_epoch();
+            auto diffns = currentnow - oldnow;
             auto diff = frametime - diffns;
             // std::cout << diff.count() << std::endl;
+
+            oldnow = currentnow;
 
             std::this_thread::sleep_for(diff);
         }
